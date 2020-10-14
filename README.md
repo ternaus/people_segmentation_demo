@@ -2,4 +2,4 @@
 
 The code for the network: https://github.com/ternaus/people_segmentation
 
-Web app: 
+Web app: https://peoplesegmentation.herokuapp.com/
