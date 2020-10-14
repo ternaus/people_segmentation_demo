@@ -41,7 +41,13 @@ if uploaded_file is not None:
         prediction = model(x)[0][0]
     mask = (prediction > 0).cpu().numpy().astype(np.uint8)
     mask = unpad(mask, pads)
-    dst = cv2.addWeighted(image, 1, (cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB) * (0, 255, 0)).astype(np.uint8), 0.5, 0)
+    dst = cv2.addWeighted(
+        image,
+        1,
+        (cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB) * (0, 255, 0)).astype(np.uint8),
+        0.5,
+        0,
+    )
 
     st.image(mask * 255, caption="Mask", use_column_width=True)
     st.image(dst, caption="Image + mask", use_column_width=True)
