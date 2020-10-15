@@ -39,7 +39,7 @@ if uploaded_file is not None:
 
     original_height, original_width = image.shape[:2]
 
-    padded_image, pads = pad(image, factor=32, border=cv2.BORDER_CONSTANT)
+    padded_image, pads = pad(image, factor=MAX_SIZE, border=cv2.BORDER_CONSTANT)
     x = transform(image=padded_image)["image"]
     x = torch.unsqueeze(tensor_from_rgb_image(x), 0)
 
