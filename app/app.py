@@ -1,16 +1,18 @@
-"""Streamlit web app"""
+"""Streamlit web app for people segmentation"""
 
+import albumentations as albu
+import cv2
 import numpy as np
 import streamlit as st
-from PIL import Image
-from people_segmentation.pre_trained_models import create_model
-import albumentations as albu
 import torch
-import cv2
-from iglovikov_helper_functions.utils.image_utils import pad, unpad
+from PIL import Image
 from iglovikov_helper_functions.dl.pytorch.utils import tensor_from_rgb_image
+from iglovikov_helper_functions.utils.image_utils import pad, unpad
+from people_segmentation.pre_trained_models import create_model
 
 st.set_option("deprecation.showfileUploaderEncoding", False)
+
+MAX_SIZE = 1024
 
 
 @st.cache(allow_output_mutation=True)
@@ -21,7 +23,9 @@ def cached_model():
 
 
 model = cached_model()
-transform = albu.Compose([albu.Normalize(p=1)], p=1)
+transform = albu.Compose(
+    [albu.LongestMaxSize(max_size=MAX_SIZE), albu.Normalize(p=1)], p=1
+)
 
 st.title("Segment people")
 
@@ -31,7 +35,9 @@ if uploaded_file is not None:
     image = np.array(Image.open(uploaded_file))
     st.image(image, caption="Before", use_column_width=True)
     st.write("")
-    st.write("Detecting faces...")
+    st.write("Detecting people...")
+
+    original_height, original_width = image.shape[:2]
 
     padded_image, pads = pad(image, factor=32, border=cv2.BORDER_CONSTANT)
     x = transform(image=padded_image)["image"]
@@ -39,14 +45,15 @@ if uploaded_file is not None:
 
     with torch.no_grad():
         prediction = model(x)[0][0]
+
     mask = (prediction > 0).cpu().numpy().astype(np.uint8)
     mask = unpad(mask, pads)
+    mask = cv2.resize(
+        mask, (original_width, original_height), interpolation=cv2.INTER_NEAREST
+    )
+    mask_3_channels = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
     dst = cv2.addWeighted(
-        image,
-        1,
-        (cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB) * (0, 255, 0)).astype(np.uint8),
-        0.5,
-        0,
+        image, 1, (mask_3_channels * (0, 255, 0)).astype(np.uint8), 0.5, 0
     )
 
     st.image(mask * 255, caption="Mask", use_column_width=True)
