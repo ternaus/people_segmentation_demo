@@ -12,7 +12,7 @@ from people_segmentation.pre_trained_models import create_model
 
 st.set_option("deprecation.showfileUploaderEncoding", False)
 
-MAX_SIZE = 1024
+MAX_SIZE = 512
 
 
 @st.cache(allow_output_mutation=True)
