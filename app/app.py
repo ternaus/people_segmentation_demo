@@ -32,16 +32,16 @@ st.title("Segment people")
 uploaded_file = st.file_uploader("Choose an image...", type="jpg")
 
 if uploaded_file is not None:
-    image = np.array(Image.open(uploaded_file))
-    st.image(image, caption="Before", use_column_width=True)
+    original_image = np.array(Image.open(uploaded_file))
+    st.image(original_image, caption="Before", use_column_width=True)
     st.write("")
     st.write("Detecting people...")
 
-    original_height, original_width = image.shape[:2]
-
+    original_height, original_width = original_image.shape[:2]
+    image = transform(image=original_image)["image"]
     padded_image, pads = pad(image, factor=MAX_SIZE, border=cv2.BORDER_CONSTANT)
-    x = transform(image=padded_image)["image"]
-    x = torch.unsqueeze(tensor_from_rgb_image(x), 0)
+
+    x = torch.unsqueeze(tensor_from_rgb_image(padded_image), 0)
 
     with torch.no_grad():
         prediction = model(x)[0][0]
@@ -53,7 +53,7 @@ if uploaded_file is not None:
     )
     mask_3_channels = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
     dst = cv2.addWeighted(
-        image, 1, (mask_3_channels * (0, 255, 0)).astype(np.uint8), 0.5, 0
+        original_image, 1, (mask_3_channels * (0, 255, 0)).astype(np.uint8), 0.5, 0
     )
 
     st.image(mask * 255, caption="Mask", use_column_width=True)
